@@ -3,6 +3,7 @@
  * @description Converts inline math (fractions, exponents, sqrt), variables, parentheses, and Greek letters to LaTeX images via CodeCogs.
  * @version 1.7.0
  * @author dirtymaskz
+ * @source https://github.com/Dirtymaskz/AutoLaTeXImageConverter
  */
 
 const config = {
