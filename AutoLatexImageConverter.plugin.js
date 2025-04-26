@@ -1,6 +1,6 @@
 /**
  * @name AutoLaTeXImageConverter
- * @description Converts inline math (fractions, exponents, sqrt), variables, parentheses, and Greek letters to LaTeX images via CodeCogs.
+ * @description Automatically converts inline math (fractions, exponents, sqrt), variables, parentheses, and Greek letters to LaTeX images via CodeCogs.
  * @version 1.0.0
  * @author dirtymaskz
  * @source https://github.com/Dirtymaskz/AutoLaTeXImageConverter
@@ -12,7 +12,7 @@ const config = {
     authors: [{ name: "You", discord_id: "", github_username: "" }],
     version: "1.7.0",
     description:
-      "Converts inline math, expressions, Greek letters, and parentheses to LaTeX images via CodeCogs with white text. Skips URLs/GIFs.",
+      "Automatically converts inline math (fractions, exponents, sqrt), variables, parentheses, and Greek letters to LaTeX images via CodeCogs.",
   }
 };
 
