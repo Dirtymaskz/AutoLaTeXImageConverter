@@ -1,8 +1,8 @@
 /**
  * @name AutoLaTeXImageConverter
- * @description Converts inline math (fractions, exponents, sqrt), variables, parentheses, and Greek letters to LaTeX images via CodeCogs, while skipping URLs/GIFs.
+ * @description Converts inline math (fractions, exponents, sqrt), variables, parentheses, and Greek letters to LaTeX images via CodeCogs.
  * @version 1.7.0
- * @author You
+ * @author dirtymaskz
  */
 
 const config = {
