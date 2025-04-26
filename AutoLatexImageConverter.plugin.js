@@ -1,7 +1,7 @@
 /**
  * @name AutoLaTeXImageConverter
  * @description Converts inline math (fractions, exponents, sqrt), variables, parentheses, and Greek letters to LaTeX images via CodeCogs.
- * @version 1.7.0
+ * @version 1.0.0
  * @author dirtymaskz
  * @source https://github.com/Dirtymaskz/AutoLaTeXImageConverter
  */
