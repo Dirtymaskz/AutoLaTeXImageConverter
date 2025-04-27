@@ -1,6 +1,6 @@
 # AutoLaTeXImageConverter
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 **Platform:** [BetterDiscord](https://betterdiscord.app/)
 
 AutoLaTeXImageConverter watches your outgoing messages for inline math—fractions, exponents, square roots, Greek letters, and parenthesized expressions—and replaces them with a link to a LaTeX-rendered PNG (white text on transparent background) from CodeCogs. No more manual screenshots or bot commands: just type `1/2`, `(x-5)/(x-4)`, `alpha^2`, `sqrt(9)`, etc., and the plugin sends the rendered image automatically.
