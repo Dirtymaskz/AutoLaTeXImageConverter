@@ -1,121 +1,171 @@
 /**
- * @name AutoLaTeXImageConverter
- * @description Automatically converts inline math (fractions, exponents, sqrt), variables, parentheses, and Greek letters to LaTeX images via CodeCogs.
- * @version 1.0.0
- * @author dirtymaskz
- * @source https://github.com/Dirtymaskz/AutoLaTeXImageConverter
+ * @name         AutoLaTeXImageConverter
+ * @description  Automatically converts inline math (fractions, exponents, sqrt) and Greek-letter names to LaTeX images via CodeCogs
+ * @version      1.0.1
+ * @author       dirtymaskz
+ * @source       https://github.com/Dirtymaskz/AutoLaTeXImageConverter
  */
 
-const config = {
+const PLUGIN_CFG = {
   info: {
-    name: "AutoLaTeXImageConverter",
-    authors: [{ name: "You", discord_id: "", github_username: "" }],
-    version: "1.7.0",
+    name:        "AutoLaTeXImageConverter",
+    version:     "1.0.1",
     description:
-      "Automatically converts inline math (fractions, exponents, sqrt), variables, parentheses, and Greek letters to LaTeX images via CodeCogs.",
+      "Automatically converts inline math (fractions, exponents, sqrt) and Greek-letter names to LaTeX images via CodeCogs",
+    authors: [{ name: "dirtymaskz", discord_id: "dirtymaskz", github_username: "Dirtymaskz" }]
   }
 };
 
-module.exports = (() => {
-  return !global.ZeresPluginLibrary
-    ? class {
-        constructor() { this._config = config; }
-        getName() { return config.info.name; }
-        getDescription() { return config.info.description; }
-        getVersion() { return config.info.version; }
-        load() {
-          BdApi.showConfirmationModal(
-            "Library Missing",
-            `The library plugin needed for ${config.info.name} is missing. Please install ZeresPluginLibrary.`,
-            { confirmText: "OK", cancelText: "Cancel" }
+/*──────────────────────── bootstrap ────────────────────────*/
+module.exports = !global.ZeresPluginLibrary
+  ? class {
+      constructor() { this._config = PLUGIN_CFG; }
+      getName()        { return PLUGIN_CFG.info.name; }
+      getDescription() { return PLUGIN_CFG.info.description; }
+      getVersion()     { return PLUGIN_CFG.info.version; }
+      load() {
+        BdApi.showConfirmationModal(
+          "Library Missing",
+          `The library plugin needed for ${PLUGIN_CFG.info.name} is missing.\nPlease install ZeresPluginLibrary from the BetterDiscord plugin list.`,
+          { confirmText: "OK" }
+        );
+      }
+      start() {}
+      stop() {}
+    }
+  : (([Plugin, Api]) => {
+      const { Patcher, WebpackModules, Logger, PluginUtilities } = Api;
+
+      /* default settings */
+      const defaults = {
+        convertFractions: true,
+        convertExponents: true,
+        convertSqrt:      true,
+
+        convertAlpha:  true,
+        convertBeta:   true,
+        convertGamma:  true,
+        convertDelta:  true,
+        convertLambda: true,
+        convertMu:     true,
+        convertNu:     true,
+        convertOmega:  true,
+        convertPi:     true,
+        convertSigma:  true,
+        convertTheta:  true
+      };
+
+      /* setting-id ⟶ LaTeX command */
+      const greekMap = {
+        convertAlpha:  "alpha",
+        convertBeta:   "beta",
+        convertGamma:  "gamma",
+        convertDelta:  "delta",
+        convertLambda: "lambda",
+        convertMu:     "mu",
+        convertNu:     "nu",
+        convertOmega:  "omega",
+        convertPi:     "pi",
+        convertSigma:  "sigma",
+        convertTheta:  "theta"
+      };
+
+      return class AutoLaTeXImageConverter extends Plugin {
+        /*──────── lifecycle ────────*/
+        onStart() {
+          this.settings = PluginUtilities.loadSettings(
+            PLUGIN_CFG.info.name,
+            defaults
+          );
+
+          Logger.log(`${PLUGIN_CFG.info.name} v${PLUGIN_CFG.info.version} starting…`);
+
+          const MsgActions = WebpackModules.getByProps("sendMessage");
+          if (!MsgActions?.sendMessage) {
+            Logger.error("sendMessage not found; aborting.");
+            return;
+          }
+
+          Patcher.before(
+            MsgActions,
+            "sendMessage",
+            (_this, [_, msg]) => this._process(msg)
           );
         }
-        start() {}
-        stop() {}
-      }
-    : (([Plugin, Api]) => {
-        const { Patcher, WebpackModules, Logger } = Api;
-        const MessageActions = WebpackModules.getByProps("sendMessage");
 
-        return class AutoLaTeXImageConverter extends Plugin {
-          onStart() {
-            Logger.log(`🔢 ${config.info.name} v${config.info.version} starting...`);
+        onStop() {
+          Patcher.unpatchAll();
+          Logger.log(`${PLUGIN_CFG.info.name} stopped.`);
+        }
 
-            if (!MessageActions?.sendMessage) {
-              Logger.error("sendMessage not found; aborting.");
-              return;
-            }
+        /*──────── message conversion ────────*/
+        _process(message) {
+          let txt = message.content;
+          if (!txt || /https?:\/\//i.test(txt)) return;   // leave links/GIFs
 
-            Patcher.before(
-              MessageActions,
-              "sendMessage",
-              (thisObj, [channelId, message]) => {
-                try {
-                  let text = message.content;
-                  if (!text) return;
+          /* 1) Greek keywords */
+          for (const [sid, cmd] of Object.entries(greekMap)) {
+            if (!this.settings[sid]) continue;
+            const re = new RegExp(`(?<!\\\\)(?<![A-Za-z])${cmd}(?![A-Za-z])`, "gi");
+            txt = txt.replace(re, `\\${cmd}`);
+          }
 
-                  // Skip any content containing URLs (including GIFs)
-                  if (/https?:\/\//i.test(text)) {
-                    Logger.debug("Skipping conversion for URL/GIF message.");
-                    return;
-                  }
-
-                  Logger.debug("Input text for LaTeX conversion:", text);
-
-                  // Convert Greek names to LaTeX commands
-                  [
-                    "alpha","beta","gamma","delta","epsilon","zeta","eta","theta","iota",
-                    "kappa","lambda","mu","nu","xi","omicron","pi","rho","sigma",
-                    "tau","upsilon","phi","chi","psi","omega"
-                  ].forEach(name => {
-                    const regex = new RegExp(`\\b${name}\\b`, "g");
-                    text = text.replace(regex, `\\${name}`);
-                  });
-
-                  // Fractions: support commands, parentheses, variables
-                  let latex = text.replace(
-                    /(\\[A-Za-z]+|\([^\)]+\)|[A-Za-z0-9]+)\s*\/\s*(\\[A-Za-z]+|\([^\)]+\)|[A-Za-z0-9]+)/g,
-                    "\\frac{$1}{$2}"
-                  );
-                  // Exponents: support commands and grouping
-                  latex = latex.replace(
-                    /(\\[A-Za-z]+|\([^\)]+\)|[A-Za-z0-9]+)\^(\\[A-Za-z]+|\([^\)]+\)|[A-Za-z0-9]+)/g,
-                    "$1^{ $2 }"
-                  );
-                  // Square roots
-                  latex = latex.replace(
-                    /sqrt\(\s*([^)]+)\s*\)/g,
-                    "\\sqrt{$1}"
-                  );
-
-                  if (latex === message.content) {
-                    // No change detected, leave message
-                    return;
-                  }
-
-                  Logger.info("Converted LaTeX:", latex);
-
-                  // White-colored text for contrast
-                  const expr = `\\dpi{200} \\color{white}{${latex}}`;
-                  const url =
-                    "https://latex.codecogs.com/png.latex?" +
-                    encodeURIComponent(expr);
-
-                  Logger.info("Replacing content with LaTeX image URL:", url);
-
-                  // Replace message content with the image URL only
-                  message.content = url;
-                } catch (err) {
-                  Logger.error("AutoLaTeXImageConverter error:", err);
-                }
-              }
+          /* 2) Fractions */
+          if (this.settings.convertFractions) {
+            txt = txt.replace(
+              /(\\[A-Za-z]+|\([^)]+\)|[A-Za-z0-9]+)\s*\/\s*(\\[A-Za-z]+|\([^)]+\)|[A-Za-z0-9]+)/g,
+              "\\frac{$1}{$2}"
             );
           }
 
-          onStop() {
-            Patcher.unpatchAll();
-            Logger.log(`🛑 ${config.info.name} stopped.`);
+          /* 3) Exponents */
+          if (this.settings.convertExponents) {
+            txt = txt.replace(
+              /(\\[A-Za-z]+|\([^)]+\)|[A-Za-z0-9]+)\^(\s*\\?[A-Za-z0-9\(\\{]+)/g,
+              "$1^{ $2 }"
+            );
           }
-        };
-      })(global.ZeresPluginLibrary.buildPlugin(config));
-})();
+
+          /* 4) Square roots */
+          if (this.settings.convertSqrt) {
+            txt = txt.replace(/sqrt\(\s*([^)]+?)\s*\)/g, "\\sqrt{$1}");
+          }
+
+          if (txt === message.content) return;  // nothing changed
+
+          const url = "https://latex.codecogs.com/png.latex?" +
+                      encodeURIComponent(`\\dpi{200} \\color{white}{${txt}}`);
+
+          message.content = url;
+        }
+
+        /*──────── settings UI ────────*/
+        getSettingsPanel() {
+          return BdApi.UI.buildSettingsPanel({
+            settings: [
+              { id:"convertFractions", type:"switch", name:"Convert Fractions",  value:this.settings.convertFractions },
+              { id:"convertExponents", type:"switch", name:"Convert Exponents",  value:this.settings.convertExponents },
+              { id:"convertSqrt",      type:"switch", name:"Convert Square Roots", value:this.settings.convertSqrt },
+
+              {
+                type:"category",
+                id:"greekLetters",
+                name:"Greek Letters",
+                collapsible:true,
+                shown:false,
+                settings: Object.entries(greekMap).map(([sid, cmd]) => ({
+                  id:sid,
+                  type:"switch",
+                  name:cmd,
+                  value:this.settings[sid]
+                }))
+              }
+            ],
+            onChange: (_grp, id, val) => {
+              this.settings[id] = val;
+              PluginUtilities.saveSettings(PLUGIN_CFG.info.name, this.settings);
+            }
+          });
+        }
+      };
+    })(global.ZeresPluginLibrary.buildPlugin(PLUGIN_CFG));
