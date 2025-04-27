@@ -12,7 +12,7 @@ const PLUGIN_CFG = {
     version:     "1.0.1",
     description:
       "Automatically converts inline math (fractions, exponents, sqrt) and Greek-letter names to LaTeX images via CodeCogs",
-    authors: [{ name: "dirtymaskz", discord_id: "dirtymaskz", github_username: "Dirtymaskz" }]
+    authors: [{ name: "dirtymaskz" }]
   }
 };
 
