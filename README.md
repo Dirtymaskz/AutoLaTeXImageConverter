@@ -55,9 +55,5 @@ AutoLaTeXImageConverter watches your outgoing messages for inline math—fractio
 2. **Download the plugin**  
    - Save `AutoLaTeXImageConverter.plugin.js` to your BetterDiscord `plugins/` folder.
 
-3. **Install ZeresPluginLibrary**  
-   - Download `0PluginLibrary.plugin.js` from the [BDPluginLibrary releases](https://github.com/rauenzi/BDPluginLibrary/releases).  
-   - Place it in the same `plugins/` folder.
-
-4. **Enable the plugin**  
+3. **Enable the plugin**  
    - Go to **User Settings → Plugins**, then toggle on **AutoLaTeXImageConverter**.
